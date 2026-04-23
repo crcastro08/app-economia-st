@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; background-color: #f4f7f6; font-size: 14px; }
+    .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    label { display: block; margin-top: 12px; font-weight: bold; }
+    select, input { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+    input[readonly] { background-color: #eee; }
+    .row { display: flex; gap: 15px; }
+    .col { flex: 1; }
+    .correo-container { display: flex; align-items: center; gap: 10px; }
+    .correo-container input[type="checkbox"] { width: auto; transform: scale(1.3); }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background-color: #2e7d32; color: white; }
+    .section-title { margin-top: 20px; font-weight: bold; color: #2e7d32; border-bottom: 2px solid #2e7d32; }
+    button { margin-top: 25px; padding: 12px; width: 100%; background-color: #2e7d32; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
+    button:disabled { background-color: #ccc; }
+    #miembro { border: 2px solid #2e7d32; background-color: #fffdec; }
+    .radio-col { width: 40px; }
+    .radio-col input { width: auto; transform: scale(1.2); cursor: pointer; margin-top: 0; }
+    /* Estilo para el link del manual */
+    .link-manual { 
+      display: block; 
+      text-align: right; 
+      margin-bottom: 15px; 
+      font-size: 13px; 
+      color: #2e7d32; 
+      text-decoration: none; 
+      font-weight: bold; 
+    }
+    .link-manual:hover { 
+      text-decoration: underline; 
+      color: #1b5e20; 
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <a href="https://sites.google.com/view/manual-registro-de-pagos/home" target="_blank" class="link-manual">
+    📖 Ver Manual de Usuario
+  </a>
+  <div class="row">
+    <div class="col">
+      <label>Fecha:</label>
+      <input type="date" id="fecha">
+    </div>
+    <div class="col">
+      <label>Responsable Economía:</label>
+      <select id="responsable"><option>Cargando...</option></select>
+    </div>
+  </div>
+
+  <label>Buscar Miembro (Escriba para filtrar):</label>
+  <input list="listaMiembros" id="miembro" oninput="actualizarTodo()" placeholder="Escriba nombre o apellido...">
+  <datalist id="listaMiembros"></datalist>
+
+  <label>Correo:</label>
+  <div class="correo-container">
+    <input type="text" id="correo" readonly>
+    <input type="checkbox" id="checkCorreo" checked title="Enviar correo">
+  </div>
+
+  <div class="section-title">Detalle de Usuario</div>
+  <table>
+    <thead>
+      <tr>
+        <th class="radio-col">Uso</th>
+        <th>Categoría</th>
+        <th>Cuota</th>
+        <th>Saldo</th>
+        <th>Pendientes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background-color: #f9f9f9;">
+        <td class="radio-col"><input type="radio" name="filaSelec" id="radioFila1" value="1" checked onchange="actualizarLogicaCodigo()"></td>
+        <td id="td-cat-1" style="font-weight: bold;">-</td>
+        <td id="td-cuota-1">0</td>
+        <td id="td-saldo-1">0</td>
+        <td id="td-pend-1">0</td>
+      </tr>
+      <tr>
+        <td class="radio-col"><input type="radio" name="filaSelec" id="radioFila2" value="2" onchange="actualizarLogicaCodigo()"></td>
+        <td><select id="td-cat-2" onchange="actualizarFila2()" style="margin:0; padding:4px;"><option value="">Seleccione...</option></select></td>
+        <td id="td-cuota-2">0</td>
+        <td id="td-saldo-2">0</td>
+        <td id="td-pend-2">0</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-title">Información del Pago</div>
+  <div class="row">
+    <div class="col">
+      <label>Concepto:</label>
+      <select id="concepto" onchange="actualizarConcepto()"><option value="">Seleccione...</option></select>
+    </div>
+    <div class="col">
+      <label>Es Cuota:</label>
+      <input type="text" id="esCuota" readonly>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col"><label>Valor:</label><input type="number" id="valor"></div>
+    <div class="col">
+      <label>Forma de Pago:</label>
+      <select id="formaPago">
+        <option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option>
+        <option>Pagala</option><option>PayWay</option><option>Especies</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col"><label>Código:</label><input type="text" id="codigo" readonly></div>
+    <div class="col"><label>Observaciones:</label><input type="text" id="observaciones"></div>
+  </div>
+
+  <button id="btnGuardar" onclick="enviar()">Guardar Registro</button>
+</div>
+
+<script>
+  let dMiembros = [], dConceptos = [];
+
+  window.onload = function() {
+    google.script.run.withSuccessHandler(datos => {
+      llenarSelect('responsable', datos.responsables);
+      
+      dMiembros = datos.miembros;
+      const datalist = document.getElementById('listaMiembros');
+      dMiembros.forEach(m => {
+        let option = document.createElement('option');
+        option.value = m.nombre;
+        datalist.appendChild(option);
+      });
+
+      dConceptos = datos.conceptos;
+      llenarSelect('concepto', dConceptos.map(c => c.concepto));
+      
+      llenarSelect('td-cat-2', datos.categoriasLista);
+    }).obtenerDatosIniciales();
+    
+    const hoy = new Date();
+    const anio = hoy.getFullYear();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0'); 
+    const dia = String(hoy.getDate()).padStart(2, '0');      
+    
+    document.getElementById('fecha').value = `${anio}-${mes}-${dia}`;
+  };
+
+  function llenarSelect(id, lista) {
+    const s = document.getElementById(id);
+    if(!s) return;
+    s.innerHTML = '<option value="">Seleccione...</option>';
+    if(lista && lista.length > 0){
+      lista.forEach(i => s.add(new Option(i, i)));
+    }
+  }
+
+  function actualizarTodo() {
+    const valorInput = document.getElementById('miembro').value;
+    const m1 = dMiembros.find(x => x.nombre === valorInput);
+    
+    if (m1) {
+      document.getElementById('correo').value = m1.correo;
+      document.getElementById('td-cat-1').innerText = m1.categoria;
+      document.getElementById('td-cuota-1').innerText = Math.round(m1.cuota || 0);
+      document.getElementById('td-saldo-1').innerText = Math.round(m1.saldoPendiente || 0);
+      document.getElementById('td-pend-1').innerText = Math.round(m1.cuotasPendientes || 0);
+      
+      if (m1.categoria === "Refrigerios") {
+        document.getElementById('concepto').value = "Refrigerios";
+      } else if (m1.categoria === "Primer Nivel") {
+        document.getElementById('concepto').value = "Primer Nivel";
+      } else {
+        document.getElementById('concepto').value = "Membresía";
+      }
+      
+      actualizarConcepto(); 
+      actualizarLogicaCodigo();
+    } else {
+      document.getElementById('correo').value = "";
+      document.getElementById('td-cat-1').innerText = "-";
+      document.getElementById('td-cuota-1').innerText = "0";
+      document.getElementById('td-saldo-1').innerText = "0";
+      document.getElementById('td-pend-1').innerText = "0";
+    }
+    
+    actualizarFila2();
+  }
+
+  function actualizarFila2() {
+    const valorInput = document.getElementById('miembro').value;
+    const catSeleccionada = document.getElementById('td-cat-2').value;
+    
+    const m2 = dMiembros.find(x => x.nombre === valorInput && x.categoria === catSeleccionada);
+    
+    if (m2) {
+      document.getElementById('td-cuota-2').innerText = Math.round(m2.cuota || 0);
+      document.getElementById('td-saldo-2').innerText = Math.round(m2.saldoPendiente || 0);
+      document.getElementById('td-pend-2').innerText = Math.round(m2.cuotasPendientes || 0);
+      document.getElementById('radioFila2').checked = true;
+    } else {
+      document.getElementById('td-cuota-2').innerText = "0";
+      document.getElementById('td-saldo-2').innerText = "0";
+      document.getElementById('td-pend-2').innerText = "0";
+    }
+    
+    // --- NUEVO: Fuerzamos la actualización del código si la fila 2 cambia ---
+    actualizarLogicaCodigo();
+  }
+
+  function actualizarConcepto() {
+    const c = dConceptos.find(x => x.concepto === document.getElementById('concepto').value);
+    document.getElementById('esCuota').value = c ? c.esCuota.toLowerCase() : "";
+    actualizarLogicaCodigo();
+  }
+
+  // --- NUEVA FUNCIÓN: Identifica qué categoría está seleccionada según el radio button ---
+  function obtenerCategoriaActiva() {
+    if (document.getElementById('radioFila1').checked) {
+      return document.getElementById('td-cat-1').innerText.trim();
+    } else {
+      return document.getElementById('td-cat-2').value;
+    }
+  }
+
+  function actualizarLogicaCodigo() {
+    const esCuota = document.getElementById('esCuota').value;
+    const nombreMiembro = document.getElementById('miembro').value;
+    
+    // --- NUEVO: Extraemos la categoría usando la función creada arriba ---
+    const catActiva = obtenerCategoriaActiva();
+    
+    // --- NUEVO: Ahora buscamos al miembro comparando NOMBRE y CATEGORÍA ---
+    const miem = dMiembros.find(x => x.nombre === nombreMiembro && x.categoria === catActiva);
+    const conc = dConceptos.find(x => x.concepto === document.getElementById('concepto').value);
+    
+    document.getElementById('codigo').value = (esCuota === "si") ? (miem ? miem.codigoRef : "") : (conc ? conc.codigoAux : "");
+  }
+
+  function enviar() {
+    const btn = document.getElementById('btnGuardar');
+    const miembroVal = document.getElementById('miembro').value.trim();
+    const codigoVal = document.getElementById('codigo').value.trim();
+    const conceptoVal = document.getElementById('concepto').value.trim();
+
+    // 1. Validación de miembro existente
+    const existeMiembro = dMiembros.some(x => String(x.nombre).trim() === miembroVal);
+    if (!existeMiembro) {
+      alert("Por favor, seleccione un miembro válido de la lista.");
+      return;
+    }
+
+    // --- 2. NUEVA VALIDACIÓN: Campo Código vacío con excepciones ---
+    if (codigoVal === "" && conceptoVal !== "Especies" && conceptoVal !== "Coacna") {
+      alert("El Campo Codigo esta vacio, es posible que el usuario no este registrado");
+      return; // El "return" detiene el proceso y evita que se guarde el registro
+    }
+    // --------------------------------------------------------------
+
+    btn.disabled = true; 
+    btn.innerText = "Guardando...";
+
+    const usaFila1 = document.getElementById('radioFila1').checked;
+    const saldoAEnviar = usaFila1 ? document.getElementById('td-saldo-1').innerText : document.getElementById('td-saldo-2').innerText;
+    const cuotaAEnviar = usaFila1 ? document.getElementById('td-cuota-1').innerText : document.getElementById('td-cuota-2').innerText;
+
+    const objetoData = {
+      fecha: document.getElementById('fecha').value,
+      responsable: document.getElementById('responsable').value,
+      miembro: miembroVal,
+      correo: document.getElementById('correo').value,
+      concepto: conceptoVal,
+      esCuota: document.getElementById('esCuota').value,
+      valor: document.getElementById('valor').value,
+      formaDePago: document.getElementById('formaPago').value,
+      saldo: saldoAEnviar,
+      cuota: cuotaAEnviar,
+      observaciones: document.getElementById('observaciones').value,
+      codigo: codigoVal,
+      enviarCorreo: document.getElementById('checkCorreo').checked
+    };
+
+    google.script.run
+      .withSuccessHandler(m => { 
+        alert(m); 
+        btn.disabled = false; 
+        btn.innerText = "Guardar Registro"; 
+        
+        document.getElementById('miembro').value = ""; 
+        document.getElementById('valor').value = "";   
+        
+        actualizarTodo(); 
+      })
+      .withFailureHandler(e => { 
+        alert("Error: " + e); 
+        btn.disabled = false; 
+        btn.innerText = "Guardar Registro"; 
+      })
+      .Guardar(objetoData);
+  }
+</script>
+</body>
+</html>

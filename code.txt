@@ -1,0 +1,147 @@
+/**
+ * Clase para estructurar los datos del registro y realizar cálculos
+ */
+class nuevosDatos {
+  constructor(fecha, responsable, miembro, correo, concepto, esCuota, valor, formaDePago, saldo, comentario, codigo) {
+    this.fecha = fecha;
+    this.responsable = responsable;
+    this.miembro = miembro;
+    this.correo = correo;
+    this.concepto = concepto;
+    this.esCuota = esCuota ? esCuota.toLowerCase() : "";
+    this.formaDePago = formaDePago;
+    this.valor = parseFloat(valor) || 0;
+    this.saldo = saldo;
+    this.comentario = comentario;
+    this.codigo = codigo;
+
+    const com_Tarjeta = 0.9723;
+    const com_Pagala = 0.9723;
+    const com_PayWay = 0.9723;
+
+    this.efectivo = (formaDePago === "Efectivo") ? this.valor : 0;
+    this.transferencia = (formaDePago === "Transferencia") ? this.valor : 0;
+    this.tarjeta = (formaDePago === "Tarjeta") ? this.valor * com_Tarjeta : 0;
+    this.pagala = (formaDePago === "Pagala") ? this.valor * com_Pagala : 0;
+    this.payway = (formaDePago === "PayWay") ? this.valor * com_PayWay : 0;
+
+    this.total = this.efectivo + this.transferencia + this.tarjeta + this.pagala + this.payway;
+  }
+}
+
+/**
+ * Obtiene los datos de las hojas a prueba de errores
+ */
+function obtenerDatosIniciales() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  let responsables = [];
+  let conceptos = [];
+  let categoriasLista = [];
+  let miembrosData = [];
+
+  // 1. Datos de Hoja Auxiliar
+  const hojaAux = ss.getSheetByName("Auxiliar");
+  if (hojaAux) {
+    const lrAux = hojaAux.getLastRow();
+    responsables = hojaAux.getRange("E2:E10").getValues().flat().filter(String);
+    
+    if (lrAux >= 2) {
+      conceptos = hojaAux.getRange("A2:C" + lrAux).getValues()
+        .map(f => ({ concepto: f[0], esCuota: f[1], codigoAux: f[2] }))
+        .filter(item => item.concepto !== "");
+        
+      categoriasLista = hojaAux.getRange("A2:A" + lrAux).getValues().flat().filter(String);
+    }
+  }
+
+  // 2. Datos de Hoja Referencias
+  const hojaRef = ss.getSheetByName("Referencias");
+  if (hojaRef) {
+    const lrRef = hojaRef.getLastRow();
+    if (lrRef >= 2) {
+      const datosRef = hojaRef.getRange(2, 2, lrRef - 1, 19).getValues();
+      miembrosData = datosRef.map(fila => ({
+        nombre: fila[0],          
+        correo: fila[2],          
+        categoria: fila[5],       
+        codigoRef: fila[6],       
+        cuota: fila[13],          
+        saldoPendiente: fila[17], 
+        cuotasPendientes: fila[18]
+      })).filter(item => item.nombre !== "");
+    }
+  }
+
+  return { 
+    responsables: responsables, 
+    conceptos: conceptos, 
+    categoriasLista: categoriasLista,
+    miembros: miembrosData 
+  };
+}
+
+/**
+ * Función Principal para Guardar y Enviar Correo
+ */
+/**
+ * Función Principal para Guardar y Enviar Correo
+ */
+function Guardar(objetoData) {
+  try {
+    const datos = new nuevosDatos(
+      objetoData.fecha, objetoData.responsable, objetoData.miembro,
+      objetoData.correo, objetoData.concepto, objetoData.esCuota,
+      objetoData.valor, objetoData.formaDePago, objetoData.saldo,
+      objetoData.observaciones, objetoData.codigo
+    );
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const hojaBase = ss.getSheetByName("Base");
+    if (!hojaBase) return "Error: No existe la hoja 'Base'.";
+
+    // --- NUEVO: Capturamos la fecha y hora exacta del sistema en ese instante ---
+    const fechaRegistro = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+
+    hojaBase.appendRow([
+      datos.fecha, datos.responsable, datos.miembro, datos.concepto,
+      datos.esCuota, datos.formaDePago, datos.valor,
+      datos.efectivo, datos.tarjeta, datos.transferencia, datos.pagala, datos.payway,
+      datos.total, datos.saldo, datos.comentario, datos.codigo,
+      fechaRegistro // <--- NUEVA COLUMNA DE FECHA Y HORA DE REGISTRO
+    ]);
+
+    // --- NUEVA VALIDACIÓN: Verifica el check Y que el correo no esté vacío ---
+    if ((objetoData.enviarCorreo === true || objetoData.enviarCorreo === "true") && datos.correo && datos.correo.trim() !== "") {
+      const hojaMsg = ss.getSheetByName("Mensaje");
+      if (!hojaMsg) return "Guardado en Base, pero no se encontró la hoja 'Mensaje'.";
+
+      const nombreCorto = extraerPrimerNombre(datos.miembro);
+      let cuerpo = (datos.esCuota === "si") ? hojaMsg.getRange("A2").getValue() : hojaMsg.getRange("A1").getValue();
+
+      cuerpo = cuerpo.replace("{name}", nombreCorto)
+                     .replace("{cantidad}", datos.valor)
+                     .replace("{concepto}", datos.concepto)
+                     .replace("{saldo}", (datos.saldo-datos.valor));//CAMBIO DE CODIGO
+
+      MailApp.sendEmail({
+        name: "Secretaria de Economía",
+        to: datos.correo,
+        replyTo: "economiast@acropolis.org.sv",
+        subject: "Aviso de Pago",
+        body: cuerpo
+      });
+      return "Registro guardado y correo enviado a " + nombreCorto;
+    }
+
+    return "Registro guardado (Sin correo enviado).";
+  } catch (e) {
+    return "Error: " + e.toString();
+  }
+}
+
+function extraerPrimerNombre(nombreCompleto) {
+  if (!nombreCompleto) return "";
+  const partes = nombreCompleto.trim().split(/\s+/);
+  return partes[0]; 
+}
