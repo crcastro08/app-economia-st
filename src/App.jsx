@@ -80,29 +80,34 @@ function App() {
         pendientes: Math.round(m.cuotasPendientes || 0)
       });
       
-      // Auto-concepto logic from original
+      // Auto-concepto logic - keeping it as requested
       let autoConc = "Membresía";
       if (m.categoria === "Refrigerios") autoConc = "Refrigerios";
       else if (m.categoria === "Primer Nivel") autoConc = "Primer Nivel";
       
-      updateConcepto(autoConc, nombre, formData.radioFila, formData.cat2);
+      // Pass m.categoria directly to avoid stale state in updateConcepto/updateCodigo
+      updateConcepto(autoConc, nombre, formData.radioFila, formData.cat2, m.categoria);
     }
   };
 
-  const updateConcepto = (concName, memberName, radio, cat2) => {
+  const updateConcepto = (concName, memberName, radio, cat2, cat1Override) => {
     const c = data.conceptos.find(x => x.concepto === concName);
     const esCuota = c ? c.esCuota.toLowerCase() : "";
-    setFormData(prev => ({ ...prev, concepto: concName, esCuota }));
     
-    updateCodigo(concName, esCuota, memberName, radio, cat2);
+    const newCodigo = calculateCodigo(concName, esCuota, memberName, radio, cat2, cat1Override || memberDetails.categoria);
+    setFormData(prev => ({ ...prev, concepto: concName, esCuota, codigo: newCodigo }));
   };
 
-  const updateCodigo = (concName, esCuota, memberName, radio, cat2) => {
-    const catActiva = radio === "1" ? memberDetails.categoria : cat2;
+  const calculateCodigo = (concName, esCuota, memberName, radio, cat2, cat1) => {
+    const catActiva = radio === "1" ? cat1 : cat2;
     const miem = data.miembros.find(x => x.nombre === memberName && x.categoria === catActiva);
     const conc = data.conceptos.find(x => x.concepto === concName);
     
-    const newCodigo = (esCuota === "si") ? (miem ? miem.codigoRef : "") : (conc ? conc.codigoAux : "");
+    return (esCuota === "si") ? (miem ? miem.codigoRef : "") : (conc ? conc.codigoAux : "");
+  };
+
+  const updateCodigo = (concName, esCuota, memberName, radio, cat2) => {
+    const newCodigo = calculateCodigo(concName, esCuota, memberName, radio, cat2, memberDetails.categoria);
     setFormData(prev => ({ ...prev, codigo: newCodigo }));
   };
 
