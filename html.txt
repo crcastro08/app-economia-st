@@ -245,9 +245,16 @@
 
   function enviar() {
     const btn = document.getElementById('btnGuardar');
+    const responsableVal = document.getElementById('responsable').value;
     const miembroVal = document.getElementById('miembro').value.trim();
     const codigoVal = document.getElementById('codigo').value.trim();
     const conceptoVal = document.getElementById('concepto').value.trim();
+
+    // 0. Validación de responsable seleccionado
+    if (!responsableVal || responsableVal === "") {
+      alert("Por favor, seleccione un responsable.");
+      return;
+    }
 
     // 1. Validación de miembro existente
     const existeMiembro = dMiembros.some(x => String(x.nombre).trim() === miembroVal);

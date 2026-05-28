@@ -14,7 +14,7 @@ export const fetchInitialData = async () => {
 
 export const saveRecord = async (data) => {
   try {
-    const response = await fetch(GAS_URL, {
+    await fetch(GAS_URL, {
       method: "POST",
       mode: "no-cors", // Requerido para GAS en algunos navegadores, pero limita la respuesta
       headers: {

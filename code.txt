@@ -89,6 +89,10 @@ function obtenerDatosIniciales() {
  */
 function Guardar(objetoData) {
   try {
+    if (!objetoData.responsable || objetoData.responsable.trim() === "") {
+      return "Error: Debe seleccionar un responsable.";
+    }
+
     const datos = new nuevosDatos(
       objetoData.fecha, objetoData.responsable, objetoData.miembro,
       objetoData.correo, objetoData.concepto, objetoData.esCuota,
