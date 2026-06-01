@@ -189,6 +189,12 @@ export async function fetchRecordsByDate(dateStr) {
     if (item.document && item.document.fields) {
       const f = item.document.fields;
       
+      // Ignorar si el registro está marcado como Anulado con el valor "SI"
+      const anuladoVal = f.Anulado?.stringValue || f.anulado?.stringValue || "";
+      if (anuladoVal.trim().toUpperCase() === "SI") {
+        continue;
+      }
+      
       const rawValor = f.Valor;
       let valor = 0;
       if (rawValor) {
@@ -205,8 +211,10 @@ export async function fetchRecordsByDate(dateStr) {
         concepto: f.Concepto?.stringValue || "",
         medioPago: f.Medio_Pago?.stringValue || "",
         valor: valor,
-        responsable: f["Responsable de Economia"]?.stringValue || "",
-        codigo: f.Codigo?.stringValue || ""
+        responsable: f["Responsable de Economia"]?.stringValue || f["Responsable de Economía"]?.stringValue || "",
+        codigo: f.Codigo?.stringValue || "",
+        anulado: anuladoVal,
+        sincronizado: f.Sincronizado?.stringValue || f.sincronizado?.stringValue || ""
       });
     }
   }
@@ -238,6 +246,7 @@ export async function saveRecordToFirestore(recordData) {
     fields: {
       "Fecha": { "timestampValue": recordData.fecha + "T00:00:00Z" },
       "Responsable de Economia": { "stringValue": recordData.responsable },
+      "Responsable de Economía": { "stringValue": recordData.responsable },
       "Miembro": { "stringValue": recordData.miembro },
       "Concepto": { "stringValue": recordData.concepto },
       "Cuota": { "stringValue": recordData.esCuota || "" },
@@ -250,9 +259,12 @@ export async function saveRecordToFirestore(recordData) {
       "PayWay": { "doubleValue": payway },
       "Total": { "doubleValue": total },
       "Saldo_Anterior": { "doubleValue": parseFloat(recordData.saldo) || 0 },
+      "Saldo Anterior": { "doubleValue": parseFloat(recordData.saldo) || 0 },
       "Comentario": { "stringValue": recordData.observaciones || "" },
       "Codigo": { "stringValue": recordData.codigo || "" },
-      "Fecha de Registro": { "timestampValue": todayIso }
+      "Fecha de Registro": { "timestampValue": todayIso },
+      "Sincronizado": { "stringValue": "" },
+      "Anulado": { "stringValue": "" }
     }
   };
   
