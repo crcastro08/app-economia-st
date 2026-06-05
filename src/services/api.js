@@ -1,4 +1,4 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxVCof0X34OMOVauRe2DNJmg0O4Jvn_zXQr3MqYr6aq2grrKEbS5kPEo_gmYr3kZpIi/exec"; // El usuario debe reemplazar esto
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxv2MAmcwp2Xd7LSSBsLYjYYu0d0RdwYTapPDdkxMI78hkKUtcv9sGxo9uT1jnMEoe6/exec"; // El usuario debe reemplazar esto
 const TOKEN = "MiClaveSecreta123";
 
 export const fetchInitialData = async () => {

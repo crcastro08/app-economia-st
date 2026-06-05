@@ -203,9 +203,11 @@ export async function fetchRecordsByDate(dateStr) {
         else if (rawValor.stringValue !== undefined) valor = parseFloat(rawValor.stringValue) || 0;
       }
       
+      const docId = item.document.name ? item.document.name.split("/").pop() : "";
       const rawFecha = f.Fecha?.stringValue || f.Fecha?.timestampValue || "";
       
       parsedRecords.push({
+        idFirebase: docId,
         fecha: rawFecha,
         miembro: f.Miembro?.stringValue || "",
         concepto: f.Concepto?.stringValue || "",

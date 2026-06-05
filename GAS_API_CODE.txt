@@ -96,8 +96,8 @@ function obtenerDatosIniciales() {
   };
 }
 
-class nuevosDatos {
-  constructor(fecha, responsable, miembro, correo, concepto, esCuota, valor, formaDePago, saldo, comentario, codigo) {
+class newData {
+  constructor(fecha, responsable, miembro, correo, concepto, esCuota, valor, formaDePago, saldo, comentario, codigo, idFirebase) {
     this.fecha = fecha;
     this.responsable = responsable;
     this.miembro = miembro;
@@ -109,6 +109,7 @@ class nuevosDatos {
     this.saldo = saldo;
     this.comentario = comentario;
     this.codigo = codigo;
+    this.idFirebase = idFirebase || "";
 
     const com_Tarjeta = 0.9723;
     const com_Pagala = 0.9723;
@@ -130,11 +131,11 @@ function Guardar(objetoData) {
       return "Error: Debe seleccionar un responsable.";
     }
 
-    const datos = new nuevosDatos(
+    const datos = new newData(
       objetoData.fecha, objetoData.responsable, objetoData.miembro,
       objetoData.correo, objetoData.concepto, objetoData.esCuota,
       objetoData.valor, objetoData.formaDePago, objetoData.saldo,
-      objetoData.observaciones, objetoData.codigo
+      objetoData.observaciones, objetoData.codigo, objetoData.idFirebase
     );
 
     const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -148,7 +149,8 @@ function Guardar(objetoData) {
       datos.esCuota, datos.formaDePago, datos.valor,
       datos.efectivo, datos.tarjeta, datos.transferencia, datos.pagala, datos.payway,
       datos.total, datos.saldo, datos.comentario, datos.codigo,
-      fechaRegistro
+      fechaRegistro,
+      datos.idFirebase // <--- NUEVA COLUMNA DE ID FIREBASE
     ]);
 
     if ((objetoData.enviarCorreo === true || objetoData.enviarCorreo === "true") && datos.correo && datos.correo.trim() !== "") {

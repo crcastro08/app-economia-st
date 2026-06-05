@@ -203,18 +203,28 @@ function App() {
         cuota: activeCuota
       };
       
-      // Save to Google Sheets (GAS)
-      await saveRecord(payload);
-
-      // Save to Firebase Firestore
+      // Save to Firebase Firestore first
+      let firestoreId = "";
       try {
-        await saveRecordToFirestore(payload);
+        const fbResponse = await saveRecordToFirestore(payload);
+        if (fbResponse && fbResponse.name) {
+          firestoreId = fbResponse.name.split("/").pop();
+        }
       } catch (fbErr) {
         console.error("Error writing to Firestore:", fbErr);
-        // We log the error in console but don't crash since Sheets succeeded.
+        throw new Error("No se pudo guardar en Firebase. El registro no se enviará a Google Sheets: " + fbErr.message);
       }
+
+      // Add the Firebase ID to the payload
+      const payloadWithFb = {
+        ...payload,
+        idFirebase: firestoreId
+      };
+
+      // Save to Google Sheets (GAS)
+      await saveRecord(payloadWithFb);
       
-      alert("Registro guardado con éxito (Google Sheets y Firebase)");
+      alert("Registro guardado con éxito (Firebase y Google Sheets)");
       // Reset logic
       setSearch("");
       setFormData(prev => ({ ...prev, miembro: "", valor: "", observaciones: "" }));
