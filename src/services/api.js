@@ -47,3 +47,26 @@ export const saveRecordWithResponse = async (data) => {
   });
   return await response.json();
 };
+
+export const fetchRecordsByDate = async (dateStr) => {
+  const QUERY_URL = "https://script.google.com/macros/s/AKfycbx6fq562Q1Qyp-CwlY-oIVAZkJjHc3f1WaeaZ3QaSWDu9YM9G6yWRsirtvhW7xa41V7/exec";
+  try {
+    const response = await fetch(`${QUERY_URL}?fecha=${dateStr}`);
+    if (!response.ok) throw new Error("Error en la consulta de Google Sheets");
+    const results = await response.json();
+    if (results.error) throw new Error(results.error);
+    
+    // Map Sheet response columns (Fecha, Miembro, Concepto, Medio_Pago, Valor)
+    // to match lowerCamelCase fields expected in App.jsx (fecha, miembro, concepto, medioPago, valor)
+    return results.map(row => ({
+      fecha: row.Fecha || "",
+      miembro: row.Miembro || "",
+      concepto: row.Concepto || "",
+      medioPago: row.Medio_Pago || "",
+      valor: parseFloat(row.Valor) || 0
+    }));
+  } catch (error) {
+    console.error("Fetch by date error:", error);
+    throw error;
+  }
+};

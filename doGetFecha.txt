@@ -1,0 +1,60 @@
+function doGet(e) {
+  try {
+    // Obtener el parámetro 'fecha' de la URL (se recomienda formato YYYY-MM-DD)
+    var fechaParam = e.parameter.fecha;
+    
+    if (!fechaParam) {
+      return ContentService.createTextOutput(JSON.stringify({ error: "El parámetro 'fecha' es requerido." }))
+                            .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Base");
+    if (!sheet) {
+      return ContentService.createTextOutput(JSON.stringify({ error: "La hoja 'Base' no fue encontrada." }))
+                            .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    var data = sheet.getDataRange().getValues();
+    var result = [];
+    
+    // Iterar a partir de la segunda fila para omitir los encabezados
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      
+      // Control de seguridad: omitir filas marcadas como anuladas en la columna S (índice 18)
+      if (row[18] === "SI") {
+        continue;
+      }
+      
+      var fechaCelda = row[0]; // Columna A (Fecha)
+      if (!fechaCelda) continue;
+      
+      // Normalizar la fecha de la celda para realizar una comparación precisa
+      var fechaFormateada = "";
+      if (fechaCelda instanceof Date) {
+        fechaFormateada = Utilities.formatDate(fechaCelda, Session.getScriptTimeZone(), "yyyy-MM-dd");
+      } else {
+        fechaFormateada = fechaCelda.toString().trim();
+      }
+      
+      // Comparar con el parámetro recibido
+      if (fechaFormateada === fechaParam) {
+        result.push({
+          "Fecha": fechaFormateada,
+          "Miembro": row[2],       // Columna C
+          "Concepto": row[3],      // Columna D
+          "Medio_Pago": row[5],    // Columna F
+          "Valor": row[6]          // Columna G
+        });
+      }
+    }
+    
+    // Retornar la respuesta estructurada en formato JSON
+    return ContentService.createTextOutput(JSON.stringify(result))
+                          .setMimeType(ContentService.MimeType.JSON);
+                          
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ error: error.toString() }))
+                          .setMimeType(ContentService.MimeType.JSON);
+  }
+}

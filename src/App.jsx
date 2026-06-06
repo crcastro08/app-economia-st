@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { fetchInitialData, saveRecord } from './services/api';
-import { fetchRecordsByDate, saveRecordToFirestore } from './services/firebaseService';
+import { fetchInitialData, saveRecord, fetchRecordsByDate } from './services/api';
 
 function App() {
   const [activeTab, setActiveTab] = useState("registro");
@@ -77,7 +76,7 @@ function App() {
       setQueryResults(records);
     } catch (err) {
       console.error(err);
-      setQueryError("Error al consultar Firebase. Verifique la conexión.");
+      setQueryError("Error al consultar Google Sheets. Verifique la conexión.");
     } finally {
       setQueryLoading(false);
     }
@@ -203,28 +202,10 @@ function App() {
         cuota: activeCuota
       };
       
-      // Save to Firebase Firestore first
-      let firestoreId = "";
-      try {
-        const fbResponse = await saveRecordToFirestore(payload);
-        if (fbResponse && fbResponse.name) {
-          firestoreId = fbResponse.name.split("/").pop();
-        }
-      } catch (fbErr) {
-        console.error("Error writing to Firestore:", fbErr);
-        throw new Error("No se pudo guardar en Firebase. El registro no se enviará a Google Sheets: " + fbErr.message);
-      }
-
-      // Add the Firebase ID to the payload
-      const payloadWithFb = {
-        ...payload,
-        idFirebase: firestoreId
-      };
-
       // Save to Google Sheets (GAS)
-      await saveRecord(payloadWithFb);
+      await saveRecord(payload);
       
-      alert("Registro guardado con éxito (Firebase y Google Sheets)");
+      alert("Registro guardado con éxito");
       // Reset logic
       setSearch("");
       setFormData(prev => ({ ...prev, miembro: "", valor: "", observaciones: "" }));
@@ -515,7 +496,7 @@ function App() {
             <div className="glass-card">
               <div className="status-box">
                 <div className="loader" style={{ width: 36, height: 36 }}></div>
-                <p>Cargando registros desde Firebase...</p>
+                <p>Cargando registros desde Google Sheets...</p>
               </div>
             </div>
           ) : queryError ? (
