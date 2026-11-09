@@ -1,4 +1,4 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxv2MAmcwp2Xd7LSSBsLYjYYu0d0RdwYTapPDdkxMI78hkKUtcv9sGxo9uT1jnMEoe6/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwUQR8hLEx-GAA3z2eAkvdmppsaZkY386ab79Tme4a1S874X6bBOvm1q-cQkoT0s6Pd/exec";
 const TOKEN = "MiClaveSecreta123";
 
 export const fetchInitialData = async () => {
@@ -55,7 +55,7 @@ export const fetchRecordsByDate = async (dateStr) => {
     if (!response.ok) throw new Error("Error en la consulta de Google Sheets");
     const results = await response.json();
     if (results.error) throw new Error(results.error);
-    
+
     // Map Sheet response columns (Fecha, Miembro, Concepto, Medio_Pago, Valor)
     // to match lowerCamelCase fields expected in App.jsx (fecha, miembro, concepto, medioPago, valor)
     return results.map(row => ({
