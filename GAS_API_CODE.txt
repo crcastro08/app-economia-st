@@ -153,6 +153,9 @@ function Guardar(objetoData) {
       datos.idFirebase // <--- NUEVA COLUMNA DE ID FIREBASE
     ]);
 
+    // Forzar a Google Sheets a mostrar fecha y hora en la columna 17 (Q)
+    hojaBase.getRange(hojaBase.getLastRow(), 17).setNumberFormat("yyyy-mm-dd hh:mm:ss");
+
     if ((objetoData.enviarCorreo === true || objetoData.enviarCorreo === "true") && datos.correo && datos.correo.trim() !== "") {
       const hojaMsg = ss.getSheetByName("Mensaje");
       if (!hojaMsg) return "Guardado en Base, pero no se encontró la hoja 'Mensaje'.";
