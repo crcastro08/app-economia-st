@@ -48,10 +48,14 @@ function App() {
     const init = async () => {
       try {
         const result = await fetchInitialData();
-        setData(result);
+        if (result && Array.isArray(result.responsables)) {
+          setData(result);
+        } else {
+          throw new Error(result?.error || "Respuesta inválida del servidor");
+        }
       } catch (e) {
         console.error(e);
-        alert("Error cargando datos. Verifique la URL de GAS y el Token.");
+        alert("Error cargando datos. Verifique la URL de GAS y el Token: " + e.message);
       } finally {
         setLoading(false);
       }
@@ -283,7 +287,7 @@ function App() {
                   required
                 >
                   <option value="">Seleccione...</option>
-                  {data.responsables.map(r => <option key={r} value={r}>{r}</option>)}
+                  {(data.responsables || []).map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
             </div>
@@ -384,7 +388,7 @@ function App() {
                   style={{ padding: '8px', marginBottom: '10px' }}
                 >
                   <option value="">Otra Categoría...</option>
-                  {data.categoriasLista.map(c => <option key={c} value={c}>{c}</option>)}
+                  {(data.categoriasLista || []).map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <div className="member-details">
                   <div className="detail-item">
@@ -410,7 +414,7 @@ function App() {
                   required
                 >
                   <option value="">Seleccione...</option>
-                  {data.conceptos.map(c => <option key={c.concepto} value={c.concepto}>{c.concepto}</option>)}
+                  {(data.conceptos || []).map(c => <option key={c.concepto} value={c.concepto}>{c.concepto}</option>)}
                 </select>
               </div>
               <div className="input-group">
