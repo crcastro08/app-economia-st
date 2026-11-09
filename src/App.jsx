@@ -196,10 +196,15 @@ function App() {
       const activeSaldo = formData.radioFila === "1" ? memberDetails.saldo : memberDetails2.saldo;
       const activeCuota = formData.radioFila === "1" ? memberDetails.cuota : memberDetails2.cuota;
       
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const fechaRegistro = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
       const payload = {
         ...formData,
         saldo: activeSaldo,
-        cuota: activeCuota
+        cuota: activeCuota,
+        fechaRegistro
       };
       
       // Save to Google Sheets (GAS)

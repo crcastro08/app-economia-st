@@ -142,7 +142,7 @@ function Guardar(objetoData) {
     const hojaBase = ss.getSheetByName("Base");
     if (!hojaBase) return "Error: No existe la hoja 'Base'.";
 
-    const fechaRegistro = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+    const fechaRegistro = objetoData.fechaRegistro || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd hh:mm:ss");
 
     hojaBase.appendRow([
       datos.fecha, datos.responsable, datos.miembro, datos.concepto,

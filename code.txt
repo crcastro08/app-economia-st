@@ -106,7 +106,7 @@ function Guardar(objetoData) {
     if (!hojaBase) return "Error: No existe la hoja 'Base'.";
 
     // --- NUEVO: Capturamos la fecha y hora exacta del sistema en ese instante ---
-    const fechaRegistro = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+    const fechaRegistro = objetoData.fechaRegistro || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd hh:mm:ss");
 
     hojaBase.appendRow([
       datos.fecha, datos.responsable, datos.miembro, datos.concepto,
