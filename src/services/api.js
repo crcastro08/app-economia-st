@@ -1,5 +1,5 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzBZ5GlOltKn-BHl21z-h-7yjbheApxgRu13xE7oWSDDHYnH78_CG6f3DG3zYRGRPaD/exec";
-const TOKEN = "MiClaveSecreta123";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz8J5mx1P09NNBanf4QhEsjrRb-871FrBhFl5sP406MdsMprdgtluPNETvoa6a8dQxF/exec";
+const TOKEN = "MiClaveSecreta1234";
 
 export const fetchInitialData = async () => {
   try {
